@@ -1,13 +1,19 @@
-const express = require("express");
-const cors = require("cors");
-const axios = require("axios");
-const crypto = require("crypto");
-const http = require("http");
-const socketIo = require("socket.io");
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import crypto from 'crypto';
+import http from 'http';
+
+import { Server } from 'socket.io';
+
+
+dotenv.config();
+
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
+const io = new Server(server, {
     cors: {
         origin: "http://localhost:5173",
         methods: ["GET", "POST"]
@@ -16,8 +22,8 @@ const io = socketIo(server, {
 
 // Spotify credentials (store these in environment variables)
 const PORT = 5000;
-const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "your_client_id";
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "your_client_secret";
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID ;
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET ;
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URL || "http://localhost:5000/callback";
 
 app.use(cors());
