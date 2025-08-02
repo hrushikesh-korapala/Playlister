@@ -2,17 +2,29 @@ const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const crypto = require("crypto");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
-require('dotenv').config();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST"]
+    }
+});
+
 // Spotify credentials (store these in environment variables)
 const PORT = 5000;
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "your_client_id";
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "your_client_secret";
-const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URL;
+const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URL || "http://localhost:5000/callback";
 
 app.use(cors());
 app.use(express.json());
+
+// In-memory storage for rooms and queues (use database in production)
+const rooms = new Map();
 
 // Generate random string for state parameter
 function generateRandomString(length) {
@@ -39,6 +51,40 @@ function generateCodeChallenge() {
 
 // Store code verifiers temporarily (use Redis or database in production)
 const codeVerifiers = new Map();
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    
+    socket.on('join_room', (roomCode) => {
+        socket.join(roomCode);
+        console.log(`User ${socket.id} joined room ${roomCode}`);
+        
+        // Initialize room if it doesn't exist
+        if (!rooms.has(roomCode)) {
+            rooms.set(roomCode, { queue: [], users: [] });
+        }
+        
+        // Send current queue to the user
+        const room = rooms.get(roomCode);
+        socket.emit('queue_update', room.queue);
+    });
+    
+    socket.on('add_to_queue', (data) => {
+        const { roomCode, track } = data;
+        const room = rooms.get(roomCode);
+        
+        if (room) {
+            room.queue.push(track);
+            // Broadcast updated queue to all users in the room
+            io.to(roomCode).emit('queue_update', room.queue);
+        }
+    });
+    
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
 
 // Login endpoint
 app.get("/login", (req, res) => {
@@ -103,6 +149,25 @@ app.get("/callback", async (req, res) => {
     } catch (error) {
         console.error("Token exchange error:", error.response?.data);
         res.status(400).send("Failed to exchange code for token");
+    }
+});
+
+// Create room endpoint
+app.post("/api/rooms", (req, res) => {
+    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    rooms.set(roomCode, { queue: [], users: [] });
+    res.json({ roomCode });
+});
+
+// Get room info
+app.get("/api/rooms/:code", (req, res) => {
+    const { code } = req.params;
+    const room = rooms.get(code);
+    
+    if (room) {
+        res.json({ exists: true, queue: room.queue });
+    } else {
+        res.json({ exists: false });
     }
 });
 
@@ -197,7 +262,7 @@ app.get("/api/playlists/:id/tracks", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(
         "Make sure to set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables",

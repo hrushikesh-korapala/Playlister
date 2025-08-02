@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import CreateRoom from "./components/CreateRoom"; //
+import CreateRoom from "./components/CreateRoom";
+import JoinRoom from "./components/JoinRoom";
+import Room from "./components/Room";
+
 function Home() {
   const containerStyle = {
     display: "flex",
@@ -7,7 +10,7 @@ function Home() {
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    width: "100vw", // <-- Full width
+    width: "100vw",
     textAlign: "center",
     backgroundColor: "#121212",
     color: "#fff",
@@ -16,7 +19,7 @@ function Home() {
 
   const buttonContainerStyle = {
     display: "flex",
-    gap: "20px", // spacing between buttons
+    gap: "20px",
   };
 
   const buttonStyle = {
@@ -34,13 +37,12 @@ function Home() {
     <div style={containerStyle}>
       <h1 style={{ marginBottom: "20px" }}>PLAYLISTER</h1>
       <div style={buttonContainerStyle}>
-        <a href="/create" style={buttonStyle}>Create Room</a>
-        <a href="/join" style={buttonStyle}>Join Room</a>
+        <Link to="/create" style={buttonStyle}>Create Room</Link>
+        <Link to="/join" style={buttonStyle}>Join Room</Link>
       </div>
     </div>
   );
 }
-
 
 export default function App() {
   return (
@@ -49,10 +51,28 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route
           path="/create"
-          element={<div style={{ textAlign: "center" }}><CreateRoom /></div>}
+          element={
+            <div style={{ backgroundColor: "#121212", minHeight: "100vh" }}>
+              <CreateRoom />
+            </div>
+          }
         />
-
-        <Route path="/join" element={<h2 style={{ textAlign: "center" }}>Join Page</h2>} />
+        <Route 
+          path="/join" 
+          element={
+            <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff", padding: "20px" }}>
+              <JoinRoom />
+            </div>
+          } 
+        />
+        <Route 
+          path="/room/:id" 
+          element={
+            <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff", padding: "20px" }}>
+              <Room />
+            </div>
+          } 
+        />
       </Routes>
     </Router>
   );
