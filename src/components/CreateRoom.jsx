@@ -53,18 +53,29 @@ export default function CreateRoom() {
         const newSocket = io("http://localhost:5000");
         setSocket(newSocket);
         
-        newSocket.emit("create_room", code);
+        // Create room and set as host
+        newSocket.emit("create_room", { roomCode: code, hostInfo: data });
         
+        // Listen for queue updates from all users
         newSocket.on("queue_update", (newQueue) => {
+          console.log("Queue updated:", newQueue);
           setQueue(newQueue);
         });
 
+        // Listen for user connections
         newSocket.on("users_update", (users) => {
+          console.log("Users updated:", users);
           setConnectedUsers(users);
         });
 
+        // Listen for playback updates
         newSocket.on("playback_update", (playbackState) => {
           setCurrentTrack(playbackState.currentTrack);
+        });
+
+        // Set host status
+        newSocket.on("host_status", (isHostNow) => {
+          console.log("Host status:", isHostNow);
         });
       })
       .catch((err) => {
@@ -110,7 +121,10 @@ export default function CreateRoom() {
   };
 
   const handleAdd = (track) => {
-    if (!socket) return;
+    if (!socket) {
+      console.error("Socket not connected");
+      return;
+    }
 
     const trackData = {
       name: track.name,
@@ -118,13 +132,19 @@ export default function CreateRoom() {
       uri: track.uri,
       preview_url: track.preview_url,
       image: track.album?.images?.[0]?.url,
-      duration_ms: track.duration_ms
+      duration_ms: track.duration_ms,
+      addedBy: user.display_name || "Host"
     };
 
+    console.log("Adding track to queue:", trackData);
     socket.emit("add_to_queue", {
       roomCode,
       track: trackData
     });
+
+    // Clear search results after adding
+    setTracks([]);
+    setSearch("");
   };
 
   const playTrack = async (trackUri) => {
@@ -196,9 +216,14 @@ export default function CreateRoom() {
   const containerStyle = {
     backgroundColor: "#121212",
     minHeight: "100vh",
+    width: "100%",
+    maxWidth: "none",
     color: "#fff",
     padding: "20px",
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Arial, sans-serif",
+    boxSizing: "border-box",
+    margin: 0,
+    overflow: "auto"
   };
 
   const sectionStyle = {
@@ -335,6 +360,8 @@ export default function CreateRoom() {
                     <strong>{track.name}</strong>
                     <br />
                     <span style={{ color: "#888" }}>{track.artist}</span>
+                    <br />
+                    <small style={{ color: "#1DB954" }}>Added by: {track.addedBy || "Unknown"}</small>
                   </div>
                 </div>
                 <div>

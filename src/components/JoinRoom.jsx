@@ -52,10 +52,12 @@ export default function JoinRoom() {
     justifyContent: "center",
     alignItems: "center",
     minHeight: "100vh",
+    width: "100%",
     backgroundColor: "#121212",
     color: "#fff",
     fontFamily: "Arial, sans-serif",
-    padding: "20px"
+    padding: "20px",
+    boxSizing: "border-box"
   };
 
   const cardStyle = {
@@ -166,5 +168,5 @@ export default function JoinRoom() {
         </div>
       </div>
     </div>
-  );
+    );
 }

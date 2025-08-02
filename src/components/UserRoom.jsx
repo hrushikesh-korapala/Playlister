@@ -13,25 +13,49 @@ export default function UserRoom() {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [connectedUsers, setConnectedUsers] = useState([]);
 
+  const [userName, setUserName] = useState("");
+
   useEffect(() => {
+    // Get or create user name
+    let name = localStorage.getItem("user_name");
+    if (!name) {
+      name = prompt("Enter your name:") || `Guest${Math.floor(Math.random() * 1000)}`;
+      localStorage.setItem("user_name", name);
+    }
+    setUserName(name);
+
     const newSocket = io("http://localhost:5000");
     setSocket(newSocket);
 
-    newSocket.emit("join_room", id);
+    // Join room with user info
+    newSocket.emit("join_room", { roomCode: id, userName: name });
     
+    // Listen for queue updates
     newSocket.on("queue_update", (newQueue) => {
+      console.log("User received queue update:", newQueue);
       setQueue(newQueue);
     });
 
+    // Listen for playback updates
     newSocket.on("playback_update", (playbackState) => {
       setCurrentTrack(playbackState.currentTrack);
     });
 
+    // Listen for connected users updates
     newSocket.on("users_update", (users) => {
+      console.log("Users update received:", users);
       setConnectedUsers(users);
     });
+
+    // Connection confirmation
+    newSocket.on("joined_room", (data) => {
+      console.log("Successfully joined room:", data);
+    });
     
-    return () => newSocket.disconnect();
+    return () => {
+      console.log("Disconnecting from room:", id);
+      newSocket.disconnect();
+    };
   }, [id]);
 
   const handleSearch = async () => {
@@ -50,7 +74,10 @@ export default function UserRoom() {
   };
 
   const handleAdd = (track) => {
-    if (!socket) return;
+    if (!socket) {
+      console.error("Socket not connected");
+      return;
+    }
 
     const trackData = {
       name: track.name,
@@ -58,9 +85,11 @@ export default function UserRoom() {
       uri: track.uri,
       preview_url: track.preview_url,
       image: track.album?.images?.[0]?.url,
-      duration_ms: track.duration_ms
+      duration_ms: track.duration_ms,
+      addedBy: userName
     };
 
+    console.log("User adding track:", trackData);
     socket.emit("add_to_queue", {
       roomCode: id,
       track: trackData
@@ -80,9 +109,14 @@ export default function UserRoom() {
   const containerStyle = {
     backgroundColor: "#121212",
     minHeight: "100vh",
+    width: "100%",
+    maxWidth: "none",
     color: "#fff",
     padding: "20px",
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Arial, sans-serif",
+    boxSizing: "border-box",
+    margin: 0,
+    overflow: "auto"
   };
 
   const sectionStyle = {

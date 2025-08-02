@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import CreateRoom from "./components/CreateRoom";
 import JoinRoom from "./components/JoinRoom";
 import UserRoom from "./components/UserRoom";
+import './App.css';
 
 function Home() {
   const containerStyle = {
