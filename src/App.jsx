@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-
+import CreateRoom from "./components/CreateRoom"; //
 function Home() {
   const containerStyle = {
     display: "flex",
@@ -47,7 +47,11 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/create" element={<h2 style={{ textAlign: "center" }}>Create Page</h2>} />
+        <Route
+          path="/create"
+          element={<div style={{ textAlign: "center" }}><CreateRoom /></div>}
+        />
+
         <Route path="/join" element={<h2 style={{ textAlign: "center" }}>Join Page</h2>} />
       </Routes>
     </Router>

@@ -4,9 +4,9 @@ const axios = require("axios");
 const crypto = require("crypto");
 
 const app = express();
-
+require('dotenv').config();
 // Spotify credentials (store these in environment variables)
-const PORT = process.env.PORT;
+const PORT = 5000;
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "your_client_id";
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "your_client_secret";
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URL;
@@ -65,12 +65,12 @@ app.get("/login", (req, res) => {
 });
 
 // Callback endpoint
-app.post("/callback", async (req, res) => {
-    const { code, state } = req.body;
+app.get("/callback", async (req, res) => {
+    const { code, state } = req.query;
 
     const codeVerifier = codeVerifiers.get(state);
     if (!codeVerifier) {
-        return res.status(400).json({ error: "Invalid state parameter" });
+        return res.status(400).send("Invalid state parameter");
     }
 
     try {
@@ -90,13 +90,19 @@ app.post("/callback", async (req, res) => {
             },
         );
 
-        // Clean up
+        // Clean up state
         codeVerifiers.delete(state);
 
-        res.json(response.data);
+        // Redirect to frontend with tokens
+        const accessToken = response.data.access_token;
+        const refreshToken = response.data.refresh_token;
+
+        res.redirect(
+            `http://localhost:5173/create?access_token=${accessToken}&refresh_token=${refreshToken}`
+        );
     } catch (error) {
         console.error("Token exchange error:", error.response?.data);
-        res.status(400).json({ error: "Failed to exchange code for token" });
+        res.status(400).send("Failed to exchange code for token");
     }
 });
 
