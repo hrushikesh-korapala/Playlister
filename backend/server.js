@@ -62,12 +62,22 @@ io.on('connection', (socket) => {
         
         // Initialize room if it doesn't exist
         if (!rooms.has(roomCode)) {
-            rooms.set(roomCode, { queue: [], users: [] });
+            rooms.set(roomCode, { 
+                queue: [], 
+                users: [], 
+                hostDevice: null,
+                currentPlayback: null 
+            });
         }
         
         // Send current queue to the user
         const room = rooms.get(roomCode);
         socket.emit('queue_update', room.queue);
+        
+        // Send current playback state if available
+        if (room.currentPlayback) {
+            socket.emit('playback_update', room.currentPlayback);
+        }
     });
     
     socket.on('add_to_queue', (data) => {
@@ -78,6 +88,42 @@ io.on('connection', (socket) => {
             room.queue.push(track);
             // Broadcast updated queue to all users in the room
             io.to(roomCode).emit('queue_update', room.queue);
+            console.log(`Added "${track.name}" to queue in room ${roomCode}`);
+        }
+    });
+
+    socket.on('remove_from_queue', (data) => {
+        const { roomCode, index } = data;
+        const room = rooms.get(roomCode);
+        
+        if (room && room.queue[index]) {
+            const removedTrack = room.queue.splice(index, 1)[0];
+            // Broadcast updated queue to all users in the room
+            io.to(roomCode).emit('queue_update', room.queue);
+            console.log(`Removed "${removedTrack.name}" from queue in room ${roomCode}`);
+        }
+    });
+
+    socket.on('set_host_device', (data) => {
+        const { roomCode, deviceId } = data;
+        const room = rooms.get(roomCode);
+        
+        if (room) {
+            room.hostDevice = deviceId;
+            console.log(`Set host device ${deviceId} for room ${roomCode}`);
+            // Let everyone know who the host is
+            io.to(roomCode).emit('host_assigned', true);
+        }
+    });
+
+    socket.on('playback_update', (data) => {
+        const { roomCode, playbackState } = data;
+        const room = rooms.get(roomCode);
+        
+        if (room) {
+            room.currentPlayback = playbackState;
+            // Broadcast playback state to all users except sender
+            socket.to(roomCode).emit('playback_update', playbackState);
         }
     });
     
