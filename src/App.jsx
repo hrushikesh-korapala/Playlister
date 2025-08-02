@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import CreateRoom from "./components/CreateRoom";
 import JoinRoom from "./components/JoinRoom";
-import Room from "./components/Room";
+import UserRoom from "./components/UserRoom";
 
 function Home() {
   const containerStyle = {
@@ -20,10 +20,12 @@ function Home() {
   const buttonContainerStyle = {
     display: "flex",
     gap: "20px",
+    flexWrap: "wrap",
+    justifyContent: "center"
   };
 
   const buttonStyle = {
-    padding: "12px 24px",
+    padding: "15px 30px",
     fontSize: "18px",
     backgroundColor: "#1DB954",
     border: "none",
@@ -31,14 +33,43 @@ function Home() {
     cursor: "pointer",
     color: "#fff",
     textDecoration: "none",
+    fontWeight: "bold",
+    transition: "all 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px"
+  };
+
+  const titleStyle = {
+    fontSize: "3rem",
+    marginBottom: "20px",
+    background: "linear-gradient(45deg, #1DB954, #1ed760)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    fontWeight: "bold"
+  };
+
+  const subtitleStyle = {
+    fontSize: "1.2rem",
+    color: "#aaa",
+    marginBottom: "40px"
   };
 
   return (
     <div style={containerStyle}>
-      <h1 style={{ marginBottom: "20px" }}>PLAYLISTER</h1>
+      <h1 style={titleStyle}>🎵 PLAYLISTER</h1>
+      <p style={subtitleStyle}>Create collaborative Spotify playlists with friends</p>
       <div style={buttonContainerStyle}>
-        <Link to="/create" style={buttonStyle}>Create Room</Link>
-        <Link to="/join" style={buttonStyle}>Join Room</Link>
+        <Link to="/create" style={buttonStyle}>
+          🎛️ Create Room (Host)
+        </Link>
+        <Link to="/join" style={buttonStyle}>
+          👥 Join Room (Guest)
+        </Link>
+      </div>
+      <div style={{ marginTop: "40px", color: "#666", fontSize: "14px", textAlign: "center" }}>
+        <p>🎯 <strong>Host:</strong> Control playback, manage queue, see connected users</p>
+        <p>👤 <strong>Guest:</strong> Add songs to the shared queue</p>
       </div>
     </div>
   );
@@ -51,27 +82,15 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route
           path="/create"
-          element={
-            <div style={{ backgroundColor: "#121212", minHeight: "100vh" }}>
-              <CreateRoom />
-            </div>
-          }
+          element={<CreateRoom />}
         />
         <Route 
           path="/join" 
-          element={
-            <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff", padding: "20px" }}>
-              <JoinRoom />
-            </div>
-          } 
+          element={<JoinRoom />} 
         />
         <Route 
           path="/room/:id" 
-          element={
-            <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff", padding: "20px" }}>
-              <Room />
-            </div>
-          } 
+          element={<UserRoom />} 
         />
       </Routes>
     </Router>
